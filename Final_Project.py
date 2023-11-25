@@ -1,17 +1,5 @@
-from tkinter import *
-
-
-window = Tk()
-window.title("Главное окно")
-window.minsize(width=400,height=400)
-
-
-Entry(window).pack()
-Label(window, text="Ввести текст").pack()
-Button(window, text="OK").pack()
-
 class Account:
-    def __inut__(self, balance):
+    def __init__(self, balance):
         self.balance = balance
 
     def check_balance(self):
@@ -19,55 +7,77 @@ class Account:
 
     # make a deposit
     def deposit(self, amount):
-        amount = float(input("Enter amount"))
         self.balance += amount
-        return "New Balance {self.balance}"
+        return self.balance
 
-    # withdraw cash
     def withdraw(self, amount):
-        amount = float(input("Enter amount"))
         if amount <= self.balance:
             self.balance -= amount
-            return "New Balance {self.balance}"
+            return self.balance
         else:
-            return f"Not enough money! Enter another amount"
+            raise RuntimeError('Low balance')
 
     def __del__(self):
         del self
 
 
-# Class Debit(Account):
-    #def __inut__(self, balance):
-    #super().__init__()
+class Debit(Account):
+    def __init__(self):
+        super().__init__(0)
+
+    def transfer(self, credit_account, amount):
+        try:
+            self.withdraw(amount)
+            credit_account.deposit(amount)
+            return f'The Amount {amount} € is added to your account. Balance: {self.check_balance()} €'
+        except Exception as e:
+            self.deposit(amount)
 
 
-class Kredit(Account):
-    def __init__(self, interest):
-        super().__init__()
+class Credit(Account):
+    def __init__(self, interest, limit):
+        super().__init__(0)
         self.interest = interest
+        self.limit = limit
 
     def withdraw(self, amount):
-        amount = float(input("Enter amount"))
-        self.interest = 0.10
-        total_amount = amount + amount * self.interest
-        if total_amount <= self.balance:
-            # n = int(input("Enter the number of payments from 1 to 6")
-            # new_amount = total_amount / n
-            # return self.balance -= new_amount
-            return "New Balance {self.balance} -= {total_amount}"
+        if amount <= self.limit - self.balance:
+            self.balance -= amount + amount * self.interest
+            return f'The Amount {amount} € has been withdrawn from your account. New Balance: {self.check_balance()} €'
         else:
-            return "Not enough money! Enter another amount"
+            raise RuntimeError('Overdraft')
+
+    def deposit(self, amount):
+        if amount + self.balance <= 0:
+            self.balance += amount
+            return f'The Amount {amount} € has been credited to your account. New Balance: {self.check_balance()} €'
+        else:
+            raise RuntimeError('Overpay')
 
 
 class Saving(Account):
     def __init__(self, interest):
-        super().__init__()
+        super().__init__(0)
         self.interest = interest
 
-    def calculate_interest(self):
-        interest = 0, 5
-        return self.balance * interest
-
     def add_interest(self):
-        return "New Balance self.balance + self.calculate_interest()"
-window.tk.mainloop()
+        self.balance = self.balance + self.balance * self.interest
+
+
+if __name__ == '__main__':
+
+    debit_account = Debit()
+    print(f'Debit Account. Balance: {debit_account.check_balance()} €')
+    debit_account.deposit(1000)
+    print(f'The amount has been credit to your account. New Balance: {debit_account.check_balance()} €')
+
+    credit_account = Credit(0.50, 2000)
+    credit_account.withdraw(500)
+    print(f'The amount has been withdrawn from your account. New Balance: {credit_account.check_balance()} €')
+    credit_account.deposit(300)
+    print(f'The amount has been credit to your account. New Balance: {credit_account.check_balance()} €')
+
+    saving_account = Saving(0.03)
+    saving_account.deposit(1500)
+    saving_account.add_interest()
+    print(f'Saving Account. Balance: {saving_account.check_balance()} €')
