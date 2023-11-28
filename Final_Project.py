@@ -1,3 +1,6 @@
+import logging
+
+
 class Account:
     def __init__(self, balance):
         self.balance = balance
@@ -30,8 +33,9 @@ class Debit(Account):
             self.withdraw(amount)
             credit_account.deposit(amount)
             return f'The Amount {amount} € is added to your account. Balance: {self.check_balance()} €'
-        except Exception as e:
+        except RuntimeError as e:
             self.deposit(amount)
+            logging.error(e)
 
 
 class Credit(Account):
@@ -41,8 +45,9 @@ class Credit(Account):
         self.limit = limit
 
     def withdraw(self, amount):
-        if amount <= self.limit - self.balance:
-            self.balance -= amount + amount * self.interest
+        total_amount = amount + amount * self.interest
+        if total_amount <= self.limit:
+            self.balance -= total_amount
             return f'The Amount {amount} € has been withdrawn from your account. New Balance: {self.check_balance()} €'
         else:
             raise RuntimeError('Overdraft')
@@ -71,7 +76,7 @@ if __name__ == '__main__':
     debit_account.deposit(1000)
     print(f'The amount has been credit to your account. New Balance: {debit_account.check_balance()} €')
 
-    credit_account = Credit(0.50, 2000)
+    credit_account = Credit(0.05, 2000)
     credit_account.withdraw(500)
     print(f'The amount has been withdrawn from your account. New Balance: {credit_account.check_balance()} €')
     credit_account.deposit(300)
